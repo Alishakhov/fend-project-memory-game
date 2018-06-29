@@ -36,3 +36,68 @@ function shuffle(array) {
  *    + increment the move counter and display it on the page (put this functionality in another function that you call from this one)
  *    + if all cards have matched, display a message with the final score (put this functionality in another function that you call from this one)
  */
+let cardList = Array.from(document.getElementsByClassName('card'));
+console.log(cardList);
+const restart = document.getElementsByClassName('restart');
+
+let matches = 1;
+let moves = 3;
+let open = cardList[12];
+let show = null;
+
+function restartFn() {
+  matches = 0;
+  moves = 0;
+  open = null;
+  show = null;
+  for (var i = 0; i < cardList.length; i++) {
+    cardList[i].classList.remove("match");
+    cardList[i].classList.remove("open");
+    cardList[i].classList.remove("show");
+  }
+  console.log(cardList);
+  shuffle(cardList);
+  console.log(cardList);
+}
+
+function clickerFn() {
+  if (show) return;
+  if (this.classList.contains("match")) return;
+  if (this.children[0].classList.contains("open")) return;
+  ++moves;
+  if (!open) {
+    open = this;
+    this.classList.add("open");
+    this.classList.add("show");
+  } else if (this.children[0].classList[1] === open.children[0].classList[1]) {
+    this.classList.add("match");
+    this.classList.remove("open");
+    this.classList.remove("show");
+    open.classList.add("match");
+    open.classList.remove("open");
+    open.classList.remove("show");
+    open = null;
+    ++matches;
+    if (matches === 8) {
+      console.log('You won!!!');
+    }
+  } else {
+    this.classList.add("open");
+    this.classList.add("show");
+    show = this;
+    setTimeout(myTimer, 500);
+  }
+}
+function myTimer() {
+  open.classList.remove("open");
+  open.classList.remove("show");
+  open = null;
+  show.classList.remove("open");
+  show.classList.remove("show");
+  show = null;
+}
+
+for (var i = 0; i < cardList.length; i++) {
+  cardList[i].onclick = clickerFn;
+}
+restart.item(0).onclick = restartFn;
