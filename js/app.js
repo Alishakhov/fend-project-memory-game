@@ -1,103 +1,90 @@
-/*
- * Create a list that holds all of your cards
- */
-
-
-/*
- * Display the cards on the page
- *   - shuffle the list of cards using the provided "shuffle" method below
- *   - loop through each card and create its HTML
- *   - add each card's HTML to the page
- */
-
-// Shuffle function from http://stackoverflow.com/a/2450976
-function shuffle(array) {
-    var currentIndex = array.length, temporaryValue, randomIndex;
-
-    while (currentIndex !== 0) {
-        randomIndex = Math.floor(Math.random() * currentIndex);
-        currentIndex -= 1;
-        temporaryValue = array[currentIndex];
-        array[currentIndex] = array[randomIndex];
-        array[randomIndex] = temporaryValue;
-    }
-
-    return array;
-}
-
-
-/*
- * set up the event listener for a card. If a card is clicked:
- *  - display the card's symbol (put this functionality in another function that you call from this one)
- *  - add the card to a *list* of "open" cards (put this functionality in another function that you call from this one)
- *  - if the list already has another card, check to see if the two cards match
- *    + if the cards do match, lock the cards in the open position (put this functionality in another function that you call from this one)
- *    + if the cards do not match, remove the cards from the list and hide the card's symbol (put this functionality in another function that you call from this one)
- *    + increment the move counter and display it on the page (put this functionality in another function that you call from this one)
- *    + if all cards have matched, display a message with the final score (put this functionality in another function that you call from this one)
- */
 let cardList = Array.from(document.getElementsByClassName('card'));
-console.log(cardList);
-const restart = document.getElementsByClassName('restart');
+let restart = document.getElementsByClassName('restart').item(0);
+let moves = document.getElementsByClassName('moves').item(0);
+let scorePanel = document.getElementsByClassName('score-panel').item(0);
+let stars = Array.from(document.getElementsByClassName('stars').item(0).children);
+let timer = document.getElementById("timer");
 
 let matches = 1;
-let moves = 3;
 let open = cardList[12];
 let show = null;
+let start = null;
 
 function restartFn() {
   matches = 0;
-  moves = 0;
+  moves.innerHTML = "0";
+  restart.innerHTML = '<i class="fa fa-repeat"></i>';
+  timer.innerHTML = "00:00";
   open = null;
   show = null;
+  start = null;
+  stars.forEach((star) => {
+    star.children[0].classList.remove("fa-star-o")
+    star.children[0].classList.add("fa-star")
+  });
+  cardList.forEach((card) => {
+    card.classList.remove("match", "open", "show");
+  });
   for (var i = 0; i < cardList.length; i++) {
-    cardList[i].classList.remove("match");
-    cardList[i].classList.remove("open");
-    cardList[i].classList.remove("show");
+    var r = Math.floor(Math.random() * i);
+    var i2 = cardList[i].children[0].classList[1];
+    var r2 = cardList[r].children[0].classList[1];
+    cardList[i].children[0].classList.remove(i2);
+    cardList[r].children[0].classList.remove(r2);
+    cardList[i].children[0].classList.add(r2);
+    cardList[r].children[0].classList.add(i2);
   }
-  console.log(cardList);
-  shuffle(cardList);
-  console.log(cardList);
 }
 
 function clickerFn() {
-  if (show) return;
+  if (show || open === this) return;
   if (this.classList.contains("match")) return;
   if (this.children[0].classList.contains("open")) return;
-  ++moves;
+  if (!start) start = new Date().getTime();
+
+  let m = parseInt(moves.innerHTML);
+  moves.innerHTML = (++m).toString();
+
   if (!open) {
     open = this;
-    this.classList.add("open");
-    this.classList.add("show");
+    this.classList.add("open", "show");
   } else if (this.children[0].classList[1] === open.children[0].classList[1]) {
-    this.classList.add("match");
-    this.classList.remove("open");
-    this.classList.remove("show");
-    open.classList.add("match");
-    open.classList.remove("open");
-    open.classList.remove("show");
+    this.classList.toggle("match", "open", "show");
+    open.classList.toggle("match", "open", "show");
     open = null;
     ++matches;
+    if (matches === 4) {
+      stars[2].children[0].classList.remove("fa-star");
+      stars[2].children[0].classList.add("fa-star-o");
+    }
     if (matches === 8) {
-      console.log('You won!!!');
+      stars[1].children[0].classList.remove("fa-star");
+      stars[1].children[0].classList.add("fa-star-o");
+      restart.innerHTML = 'You won! Play again?<i class="fa fa-repeat"></i>';
     }
   } else {
-    this.classList.add("open");
-    this.classList.add("show");
+    this.classList.add("open", "show");
     show = this;
     setTimeout(myTimer, 500);
   }
 }
+
 function myTimer() {
-  open.classList.remove("open");
-  open.classList.remove("show");
+  open.classList.remove("open", "show");
+  show.classList.remove("open", "show");
   open = null;
-  show.classList.remove("open");
-  show.classList.remove("show");
   show = null;
 }
+
+setInterval(function () {
+  if (!start || matches === 8) return;
+  var elapsed = new Date().getTime() - start;
+  var minutes = Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60)) + 100;
+  var seconds = Math.floor((elapsed % (1000 * 60)) / 1000) + 100;
+  timer.innerHTML = minutes.toString().substr(1) + ":" + seconds.toString().substr(1);
+}, 500);
 
 for (var i = 0; i < cardList.length; i++) {
   cardList[i].onclick = clickerFn;
 }
-restart.item(0).onclick = restartFn;
+restart.onclick = restartFn;
